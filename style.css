@@ -1,0 +1,89 @@
+h5 {
+    background-color: #F49C2D;
+    height: 20px;
+}
+
+h4 {
+    text-align: center;
+    background-color: #F49C2D;
+    height: 30px;
+    margin-bottom: -20px;
+}
+
+#ZMap {
+    width: 95vw;
+    height: 50vh;
+    margin: auto;
+}
+
+#info {
+    width: 95vw;
+    height: 90vh;
+    margin: auto;
+}
+
+.loading {
+    position: absolute;
+    height: 50vh;
+    width: 95vw;
+    background-color: rgba(240, 255, 255, 0.5);
+    z-index: 10000;
+}
+
+#liveToastBtn {
+    position: absolute;
+    border-radius: 0px 0px 50px 0px;
+    z-index: 3;
+}
+
+table {
+    margin: auto;
+    border-collapse: collapse;
+    table-layout: auto;
+    width: 100px;
+}
+
+td {
+    border: 1px solid black;
+    padding: 0px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#week-forecast {
+    padding-top: 5px;
+    z-index: 5;
+    position: relative;
+    width: 95vw;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-items: center;
+}
+
+.card-img-top {
+    height: 60px;
+    width: 60px;
+}
+
+.today_img {
+    height: 50px;
+    width: 50px;
+    margin-top: -10px;
+    margin-bottom: -10px;
+}
+
+
+.card-title {
+    font-size: 15px;
+}
+
+.areaName {
+    height: 80px;
+    padding-top: 30px;
+}
+
+.temp {
+    background-color: white;
+}
