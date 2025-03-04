@@ -148,7 +148,26 @@ function showMarker(weather_poi) {
     });
 }
 
-// Week forecast function (unchanged except for minor cleanup)
+// Helper function to get icon HTML after checking if the file exists
+async function getWeatherIconHTML(weather_code, weather_status) {
+    const imgUrl = `weather_icon/${weather_code}.svg`;
+    try {
+        // Perform a HEAD request to check if the file exists.
+        const response = await fetch(imgUrl, { method: 'HEAD' });
+        if (response.ok) {
+            // Return the img tag if the file exists.
+            return `<img src="${imgUrl}" class="card-img-top" alt="${weather_status}">`;
+        } else {
+            // Fallback to plain text if the file is not found.
+            return `<p class="m-0">${weather_status}</p>`;
+        }
+    } catch (error) {
+        // On any error, return the weather status text.
+        return `<p class="m-0">${weather_status}</p>`;
+    }
+}
+
+// Week forecast function (updated to use async/await for checking icon existence)
 function week_forecast(location) {
     const [fromDate, toDate] = from_to_date();
     const api = "/search/weather/search_weather_week_info";
@@ -162,62 +181,69 @@ function week_forecast(location) {
     try {
         map.requestAPI(api, params, function (response) {
             if (response.ret && response.ret.status === 'OK') {
-                const weather_response = response.ret.message.result;
-                let weatherCards = "";
-                let area_name = "";
-                for (let i = 0; i < 7; i++) {
-                    const dailyWeather = weather_response.weather[i];
-                    const weather_code = dailyWeather.weather_data.weather_cd;
-                    const weather_status = dailyWeather.weather_data.weather_text;
-                    const forecastDate = dailyWeather.weather_data.forecast_date;
-                    const precipChance = extractNumber(dailyWeather.weather_data.precipChance);
-                    const max_temp = dailyWeather.weather_data.max_temp_degree;
-                    const min_temp = dailyWeather.weather_data.min_temp_degree;
-                    const pref_name = dailyWeather.pref_nm;
-                    let reliability = dailyWeather.weather_data.reliability;
-                    area_name = dailyWeather.area_nm;
+                (async function () {
+                    const weather_response = response.ret.message.result;
+                    let weatherCards = "";
+                    let area_name = "";
 
-                    if (i === 0) {
-                        weatherCards += `                    
-                        <div class="card text-center">
-                        <hr class="border border-dark border-2 opacity-50">
-                        <div class="card-body">
-                            <h5 class="areaName">${area_name}</h5>
-                            <p class="card-text">日付</p>
-                            <hr class="border border-dark border-2 opacity-50">
-                            <p class="card-text">降水確率(%)</p>
-                            <hr class="border border-dark border-2 opacity-50">
-                            <h5 class="card-title">${pref_name}</h5>
-                            <p class="card-text"><span style="color:red;">最高</span> / <span style="color:blue;">最低</span> (℃)</p>
-                            <hr class="border border-dark border-2 opacity-50">
-                            <p class="card-text"><small class="text-body-secondary">信頼度</small></p>
-                        </div>
-                    </div>`;
+                    // Process each day's forecast asynchronously.
+                    for (let i = 0; i < 7; i++) {
+                        const dailyWeather = weather_response.weather[i];
+                        const weather_code = dailyWeather.weather_data.weather_cd;
+                        const weather_status = dailyWeather.weather_data.weather_text;
+                        const forecastDate = dailyWeather.weather_data.forecast_date;
+                        const precipChance = extractNumber(dailyWeather.weather_data.precipChance);
+                        const max_temp = dailyWeather.weather_data.max_temp_degree;
+                        const min_temp = dailyWeather.weather_data.min_temp_degree;
+                        const pref_name = dailyWeather.pref_nm;
+                        let reliability = dailyWeather.weather_data.reliability;
+                        area_name = dailyWeather.area_nm;
+
+                        // For the header card, display labels only once.
+                        if (i === 0) {
+                            weatherCards += `                    
+                            <div class="card text-center">
+                                <hr class="border border-dark border-2 opacity-50">
+                                <div class="card-body">
+                                    <h5 class="areaName">${area_name}</h5>
+                                    <p class="card-text">日付</p>
+                                    <hr class="border border-dark border-2 opacity-50">
+                                    <p class="card-text">降水確率(%)</p>
+                                    <hr class="border border-dark border-2 opacity-50">
+                                    <h5 class="card-title">${pref_name}</h5>
+                                    <p class="card-text"><span style="color:red;">最高</span> / <span style="color:blue;">最低</span> (℃)</p>
+                                    <hr class="border border-dark border-2 opacity-50">
+                                    <p class="card-text"><small class="text-body-secondary">信頼度</small></p>
+                                </div>
+                            </div>`;
+                        }
+
+                        if (reliability === null) reliability = "-";
+                        const formattedForcastDate = convertDate(forecastDate, 'week');
+
+                        // Get the icon HTML (this awaits the HEAD request)
+                        const iconHTML = await getWeatherIconHTML(weather_code, weather_status);
+
+                        weatherCards += `
+                            <div class="card text-center">
+                                <hr class="border border-dark border-2 opacity-50">
+                                ${iconHTML}
+                                <div class="card-body">
+                                    <h5 class="card-title">${weather_status}</h5>
+                                    <p class="card-text">${formattedForcastDate}</p>
+                                    <hr class="border border-dark border-2 opacity-50">
+                                    <p class="card-text">${precipChance}</p>
+                                    <hr class="border border-dark border-2 opacity-50">
+                                    <h5 class="temp"></h5>
+                                    <p class="card-text"><span style="color:red;">${max_temp}</span> / <span style="color:blue;">${min_temp}</span></p>
+                                    <hr class="border border-dark border-2 opacity-50">
+                                    <p class="card-text"><small class="text-body-secondary">${reliability}</small></p>
+                                </div>
+                            </div>`;
                     }
-
-                    if (reliability === null) reliability = "-";
-                    const formattedForcastDate = convertDate(forecastDate, 'week');
-
-                    weatherCards += `
-                        <div class="card text-center">
-                            <hr class="border border-dark border-2 opacity-50">
-                            <img src="weather_icon/${weather_code}.svg" class="card-img-top" alt="${weather_status}">
-                            <div class="card-body">
-                            <h5 class="card-title">${weather_status}</h5>
-
-                                <p class="card-text">${formattedForcastDate}</p>
-                                <hr class="border border-dark border-2 opacity-50">
-                                <p class="card-text">${precipChance}</p>
-                                <hr class="border border-dark border-2 opacity-50">
-                                <h5 class="temp"></h5>
-                                <p class="card-text"><span style="color:red;">${max_temp}</span> / <span style="color:blue;">${min_temp}</span></p>
-                                <hr class="border border-dark border-2 opacity-50">
-                                <p class="card-text"><small class="text-body-secondary">${reliability}</small></p>
-                            </div>
-                        </div>`;
-                }
-                document.getElementById('week-forecast').innerHTML = weatherCards;
-                today_popup(location, area_name);
+                    document.getElementById('week-forecast').innerHTML = weatherCards;
+                    today_popup(location, area_name);
+                })();
             } else {
                 console.error("Week_Weather検索失敗");
             }
